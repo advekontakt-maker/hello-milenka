@@ -33,3 +33,17 @@ body { margin: 0; display: flex; align-items: center; justify-content: center; b
 	0% { opacity: 1; transform: translateY(0) scale(1); }
 	100% { opacity: 0; transform: translateY(-140px) scale(0.4); }
 }
+
+/* Button appear animation */
+@keyframes btnAppear {
+	0% { 
+		opacity: 0; 
+		transform: scale(0.5) rotate(-10deg);
+	}
+	100% { 
+		opacity: 1; 
+		transform: scale(1) rotate(0deg);
+	}
+}
+
+.btn-appear { animation: btnAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }

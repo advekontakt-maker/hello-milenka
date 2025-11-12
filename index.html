@@ -33,6 +33,11 @@
         createHeart(randomX, randomY);
         if (Math.random() < 0.4) createSpark(btnCenterX, btnCenterY);
       }
+
+      // after animation, create a new button
+      setTimeout(() => {
+        createNewButton();
+      }, 600);
     });
 
     function createHeart(x, y) {
@@ -75,6 +80,38 @@
       spark.style.top = top + 'px';
       container.appendChild(spark);
       setTimeout(() => spark.remove(), 1000);
+    }
+
+    function createNewButton() {
+      const newBtn = document.createElement('button');
+      newBtn.className = 'btn btn-appear';
+      newBtn.innerText = 'Spróbuj jeszcze raz';
+      
+      // replace the old button with new one in the DOM
+      btn.parentNode.replaceChild(newBtn, btn);
+      
+      // attach click listener to new button
+      newBtn.addEventListener('click', (e) => {
+        // get button bounds to spawn hearts all over it
+        const btnRect = newBtn.getBoundingClientRect();
+        const btnWidth = btnRect.width;
+        const btnHeight = btnRect.height;
+        const btnCenterX = btnRect.left + btnWidth / 2;
+        const btnCenterY = btnRect.top + btnHeight / 2;
+
+        // create a burst of hearts and occasional sparkles
+        for (let i = 0; i < 15; i++) {
+          const randomX = btnRect.left + Math.random() * btnWidth;
+          const randomY = btnRect.top + Math.random() * btnHeight;
+          createHeart(randomX, randomY);
+          if (Math.random() < 0.4) createSpark(btnCenterX, btnCenterY);
+        }
+
+        // create another new button
+        setTimeout(() => {
+          createNewButton();
+        }, 600);
+      });
     }
   </script>
 
