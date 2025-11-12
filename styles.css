@@ -1,5 +1,6 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; }
-body { margin: 0; display: flex; align-items: center; justify-content: center; background: #f5f7fa; font-family: "Segoe UI", Roboto, Arial, sans-serif; }
+body { margin: 0; display: flex; align-items: center; justify-content: center; background: #FFB6D9; font-family: "Segoe UI", Roboto, Arial, sans-serif; }
 .container { text-align: center; }
-.container h1 { font-size: 3rem; color: #1f2937; margin: 0; }
+.btn { padding: 20px 40px; font-size: 1.5rem; background: #FF69B4; color: white; border: none; border-radius: 10px; cursor: pointer; transition: 0.3s; }
+.btn:hover { background: #FF1493; transform: scale(1.05); }
