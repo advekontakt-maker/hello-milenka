@@ -90,6 +90,19 @@
       // replace the old button with new one in the DOM
       btn.parentNode.replaceChild(newBtn, btn);
       
+      // create burst particles around new button
+      const newBtnRect = newBtn.getBoundingClientRect();
+      const centerX = newBtnRect.left + newBtnRect.width / 2;
+      const centerY = newBtnRect.top + newBtnRect.height / 2;
+      
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const distance = 80;
+        const x = centerX + Math.cos(angle) * distance;
+        const y = centerY + Math.sin(angle) * distance;
+        createBurstParticle(x, y, angle);
+      }
+      
       // attach click listener to new button
       newBtn.addEventListener('click', (e) => {
         // get button bounds to spawn hearts all over it
@@ -112,6 +125,24 @@
           createNewButton();
         }, 600);
       });
+    }
+
+    function createBurstParticle(x, y, angle) {
+      const particle = document.createElement('span');
+      particle.className = 'burst-particle';
+      particle.innerHTML = ['✨', '💫', '⭐'][Math.floor(Math.random() * 3)];
+      
+      const rect = container.getBoundingClientRect();
+      particle.style.left = (x - rect.left) + 'px';
+      particle.style.top = (y - rect.top) + 'px';
+      particle.style.position = 'absolute';
+      particle.style.fontSize = '20px';
+      particle.style.pointerEvents = 'none';
+      particle.style.animation = `burstFloat 0.8s ease-out forwards`;
+      particle.style.setProperty('--angle', angle + 'rad');
+      
+      container.appendChild(particle);
+      setTimeout(() => particle.remove(), 900);
     }
   </script>
 
