@@ -51,6 +51,7 @@
 
       heart.style.left = left + 'px';
       heart.style.top = top + 'px';
+      heart.style.pointerEvents = 'none'; // prevent blocking clicks
 
       const size = Math.floor(Math.random() * 22) + 16;
       heart.style.fontSize = size + 'px';
@@ -67,7 +68,13 @@
 
       container.appendChild(heart);
 
-      setTimeout(() => heart.remove(), 2600);
+      // ensure heart is removed after animation completes
+      const animationDuration = parseFloat(dur) * 1000;
+      setTimeout(() => {
+        if (heart.parentNode) {
+          heart.remove();
+        }
+      }, animationDuration + 200);
     }
 
     function createSpark(x, y) {
