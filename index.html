@@ -127,9 +127,55 @@
           if (Math.random() < 0.4) createSpark(btnCenterX, btnCenterY);
         }
 
+        // create button with "Coś nie pykło" text
+        setTimeout(() => {
+          createThirdButton();
+        }, 600);
+      });
+    }
+
+    function createThirdButton() {
+      const thirdBtn = document.createElement('button');
+      thirdBtn.className = 'btn btn-appear';
+      thirdBtn.innerText = 'Coś nie pykło';
+      
+      // replace the second button with third one in the DOM
+      const currentBtn = container.querySelector('.btn');
+      currentBtn.parentNode.replaceChild(thirdBtn, currentBtn);
+      
+      // create burst particles around third button
+      const thirdBtnRect = thirdBtn.getBoundingClientRect();
+      const centerX = thirdBtnRect.left + thirdBtnRect.width / 2;
+      const centerY = thirdBtnRect.top + thirdBtnRect.height / 2;
+      
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const distance = 80;
+        const x = centerX + Math.cos(angle) * distance;
+        const y = centerY + Math.sin(angle) * distance;
+        createBurstParticle(x, y, angle);
+      }
+      
+      // attach click listener to third button
+      thirdBtn.addEventListener('click', (e) => {
+        // get button bounds to spawn hearts all over it
+        const btnRect = thirdBtn.getBoundingClientRect();
+        const btnWidth = btnRect.width;
+        const btnHeight = btnRect.height;
+        const btnCenterX = btnRect.left + btnWidth / 2;
+        const btnCenterY = btnRect.top + btnHeight / 2;
+
+        // create a burst of hearts and occasional sparkles
+        for (let i = 0; i < 15; i++) {
+          const randomX = btnRect.left + Math.random() * btnWidth;
+          const randomY = btnRect.top + Math.random() * btnHeight;
+          createHeart(randomX, randomY);
+          if (Math.random() < 0.4) createSpark(btnCenterX, btnCenterY);
+        }
+
         // create another new button
         setTimeout(() => {
-          createNewButton();
+          createThirdButton();
         }, 600);
       });
     }
