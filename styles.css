@@ -6,11 +6,30 @@ body { margin: 0; display: flex; align-items: center; justify-content: center; b
 .btn:hover { background: #FF1493; transform: scale(1.05); }
 
 /* Heart animation styles */
-.heart { position: absolute; pointer-events: none; will-change: transform, opacity; display: inline-block; transform-origin: center; }
+.heart { position: absolute; pointer-events: none; will-change: transform, opacity; display: inline-block; transform-origin: center; color: #ff2d95; font-weight: 700; text-shadow: 0 4px 8px rgba(0,0,0,0.12); }
 
 @keyframes floatUp {
-	0% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
-	100% { opacity: 0; transform: translateY(-160px) scale(1.6) rotate(360deg); }
+	0% {
+		opacity: 1;
+		transform: translateX(var(--dx, 0px)) translateY(0) scale(1) rotate(0deg);
+		filter: blur(0px);
+	}
+	50% {
+		transform: translateX(calc(var(--dx, 0px) * 0.6)) translateY(-90px) scale(1.25) rotate(calc(var(--rot, 40deg)));
+	}
+	100% {
+		opacity: 0;
+		transform: translateX(calc(var(--dx, 0px) * 0.3)) translateY(-240px) scale(1.6) rotate(calc(var(--rot, 360deg)));
+		filter: blur(1px);
+	}
 }
 
-.heart { animation-name: floatUp; animation-timing-function: ease-out; }
+.heart { animation-name: floatUp; animation-timing-function: cubic-bezier(.2,.8,.2,1); }
+
+/* small sparkle / confetti */
+.spark { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.95); pointer-events: none; box-shadow: 0 2px 6px rgba(255,82,147,0.45); animation: floatSpark 900ms ease-out forwards; }
+
+@keyframes floatSpark {
+	0% { opacity: 1; transform: translateY(0) scale(1); }
+	100% { opacity: 0; transform: translateY(-140px) scale(0.4); }
+}

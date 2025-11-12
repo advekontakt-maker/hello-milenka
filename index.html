@@ -15,40 +15,56 @@
     const btn = document.getElementById('loveBtn');
     const container = document.querySelector('.container');
 
+    const heartEmojis = ['❤', '💗', '💖', '💞', '💕', '❣️'];
+
     btn.addEventListener('click', (e) => {
-      // create a burst of hearts
-      for (let i = 0; i < 8; i++) createHeart(e.clientX, e.clientY);
+      // create a burst of hearts and occasional sparkles
+      for (let i = 0; i < 10; i++) {
+        createHeart(e.clientX + (Math.random() - 0.5) * 40, e.clientY + (Math.random() - 0.5) * 20);
+        if (Math.random() < 0.35) createSpark(e.clientX, e.clientY);
+      }
     });
 
     function createHeart(x, y) {
       const heart = document.createElement('span');
       heart.className = 'heart';
-      heart.innerText = '❤';
+      heart.innerText = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
 
-      // position relative to container
       const rect = container.getBoundingClientRect();
-      const left = x - rect.left - 10 + (Math.random() - 0.5) * 40; // small horizontal spread
-      const top = y - rect.top - 10 + (Math.random() - 0.5) * 20;
+      const left = x - rect.left - 12;
+      const top = y - rect.top - 12;
 
       heart.style.left = left + 'px';
       heart.style.top = top + 'px';
 
-      // randomize size, opacity and animation duration
-      const size = Math.floor(Math.random() * 18) + 18;
+      const size = Math.floor(Math.random() * 22) + 16;
       heart.style.fontSize = size + 'px';
-      heart.style.opacity = (Math.random() * 0.5 + 0.5).toString();
-      heart.style.animationDuration = (1.2 + Math.random() * 0.8) + 's';
+      heart.style.opacity = (Math.random() * 0.4 + 0.6).toString();
 
-      // slight horizontal drift using transform translateX - set initial transform
-      const drift = (Math.random() - 0.5) * 120;
-      heart.style.transform = `translateX(${drift}px)`;
+      const dx = Math.floor((Math.random() - 0.5) * 220);
+      const rot = Math.floor((Math.random() - 0.5) * 720);
+      const dur = (1.2 + Math.random() * 1.4).toFixed(2) + 's';
+
+      heart.style.setProperty('--dx', dx + 'px');
+      heart.style.setProperty('--rot', rot + 'deg');
+      heart.style.setProperty('--dur', dur);
+      heart.style.animationDuration = dur;
 
       container.appendChild(heart);
 
-      // remove after animation ends
-      setTimeout(() => {
-        heart.remove();
-      }, 2200);
+      setTimeout(() => heart.remove(), 2600);
+    }
+
+    function createSpark(x, y) {
+      const spark = document.createElement('span');
+      spark.className = 'spark';
+      const rect = container.getBoundingClientRect();
+      const left = x - rect.left - 4 + (Math.random() - 0.5) * 24;
+      const top = y - rect.top - 4 + (Math.random() - 0.5) * 12;
+      spark.style.left = left + 'px';
+      spark.style.top = top + 'px';
+      container.appendChild(spark);
+      setTimeout(() => spark.remove(), 1000);
     }
   </script>
 
