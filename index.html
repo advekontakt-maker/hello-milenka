@@ -18,10 +18,20 @@
     const heartEmojis = ['❤', '💗', '💖', '💞', '💕', '❣️'];
 
     btn.addEventListener('click', (e) => {
+      // get button bounds to spawn hearts all over it
+      const btnRect = btn.getBoundingClientRect();
+      const btnWidth = btnRect.width;
+      const btnHeight = btnRect.height;
+      const btnCenterX = btnRect.left + btnWidth / 2;
+      const btnCenterY = btnRect.top + btnHeight / 2;
+
       // create a burst of hearts and occasional sparkles
-      for (let i = 0; i < 10; i++) {
-        createHeart(e.clientX + (Math.random() - 0.5) * 40, e.clientY + (Math.random() - 0.5) * 20);
-        if (Math.random() < 0.35) createSpark(e.clientX, e.clientY);
+      for (let i = 0; i < 15; i++) {
+        // random position within and around the button area
+        const randomX = btnRect.left + Math.random() * btnWidth;
+        const randomY = btnRect.top + Math.random() * btnHeight;
+        createHeart(randomX, randomY);
+        if (Math.random() < 0.4) createSpark(btnCenterX, btnCenterY);
       }
     });
 
