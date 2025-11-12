@@ -8,7 +8,49 @@
 </head>
 <body>
   <div class="container">
-    <button class="btn">Click Me</button>
+    <button class="btn" id="loveBtn">Click Me</button>
   </div>
+
+  <script>
+    const btn = document.getElementById('loveBtn');
+    const container = document.querySelector('.container');
+
+    btn.addEventListener('click', (e) => {
+      // create a burst of hearts
+      for (let i = 0; i < 8; i++) createHeart(e.clientX, e.clientY);
+    });
+
+    function createHeart(x, y) {
+      const heart = document.createElement('span');
+      heart.className = 'heart';
+      heart.innerText = '❤';
+
+      // position relative to container
+      const rect = container.getBoundingClientRect();
+      const left = x - rect.left - 10 + (Math.random() - 0.5) * 40; // small horizontal spread
+      const top = y - rect.top - 10 + (Math.random() - 0.5) * 20;
+
+      heart.style.left = left + 'px';
+      heart.style.top = top + 'px';
+
+      // randomize size, opacity and animation duration
+      const size = Math.floor(Math.random() * 18) + 18;
+      heart.style.fontSize = size + 'px';
+      heart.style.opacity = (Math.random() * 0.5 + 0.5).toString();
+      heart.style.animationDuration = (1.2 + Math.random() * 0.8) + 's';
+
+      // slight horizontal drift using transform translateX - set initial transform
+      const drift = (Math.random() - 0.5) * 120;
+      heart.style.transform = `translateX(${drift}px)`;
+
+      container.appendChild(heart);
+
+      // remove after animation ends
+      setTimeout(() => {
+        heart.remove();
+      }, 2200);
+    }
+  </script>
+
 </body>
 </html>
