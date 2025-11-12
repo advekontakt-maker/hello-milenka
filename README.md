@@ -1,6 +1,8 @@
 # Simple Hello World Website
 
-This is a minimal static website that displays "Hello world".
+This is a minimal static website that displays "Kocham Cię Milenka".
+
+**Live site:** https://advekontakt-maker.github.io/hello-milenka/
 
 Files:
 - `index.html` — main page
