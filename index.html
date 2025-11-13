@@ -62,7 +62,7 @@
 
     <div class="puzzle-modal" id="puzzleModal" style="display: none;">
       <div class="puzzle-container">
-        <div class="puzzle-message" id="puzzleMessage">ułóż puzzle, żeby przejść dalej</div>
+        <div class="puzzle-message" id="puzzleMessage">Ułóż kawałki serca, moja miłości — zasługujesz na niespodziankę ❤️</div>
         <div class="puzzle-board" id="puzzleBoard"></div>
         <div class="puzzle-slots" id="puzzleSlots"></div>
       </div>
@@ -287,72 +287,141 @@
 
       // Show puzzle elements after 3 seconds
       setTimeout(() => {
-        // Create puzzle pieces (numbers 1-3 shuffled)
-        const numbers = [1, 2, 3];
-        const shuffled = numbers.sort(() => Math.random() - 0.5);
-        const correctOrder = [1, 2, 3];
-        
+        // Create puzzle using image fragments (3 pieces)
+        const piecesCount = 3;
+        const indices = Array.from({ length: piecesCount }, (_, i) => i);
+        const shuffled = indices.sort(() => Math.random() - 0.5);
+        const correctOrder = indices.slice();
+
+        // Inline SVG heart (larger, more detailed) used as a single image split into fragments
+        const rawSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='360' height='120' viewBox='0 0 360 120'>
+          <defs>
+            <linearGradient id='g' x1='0' x2='1'>
+              <stop offset='0' stop-color='%23ff9fc8' />
+              <stop offset='0.5' stop-color='%23ff6aa6' />
+              <stop offset='1' stop-color='%23ff2d95' />
+            </linearGradient>
+            <filter id='grain'>
+              <feTurbulence baseFrequency='0.8' numOctaves='1' stitchTiles='stitch'/>
+              <feColorMatrix type='saturate' values='0.2' />
+              <feBlend mode='overlay' in2='SourceGraphic'/>
+            </filter>
+          </defs>
+          <rect width='360' height='120' rx='16' fill='%23fff4f8' />
+          <g transform='translate(40,10) scale(1)'>
+            <path d='M150 20c-30-28-78-27-107 3c-25 25-28 64-7 90c21 26 67 54 117 88c50-34 96-62 117-88c21-26 18-65-7-90c-24-24-74-26-113-3z' fill='url(%23g)' stroke='%23c01a6b' stroke-width='3' />
+          </g>
+        </svg>`;
+        const heartSVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(rawSvg);
+
         // Create slots first (in correct order)
         correctOrder.forEach((num, idx) => {
           const slot = document.createElement('div');
           slot.className = 'puzzle-slot';
-          slot.dataset.correctNum = num;
+          slot.dataset.correctIndex = num;
           slot.dataset.index = idx;
           slot.id = `slot-${idx}`;
           puzzleSlots.appendChild(slot);
         });
-        
-        // Create draggable pieces
-        shuffled.forEach(num => {
+
+        // Create draggable pieces as image fragments
+        shuffled.forEach(idx => {
           const piece = document.createElement('div');
           piece.className = 'puzzle-piece';
-          piece.textContent = num;
           piece.draggable = true;
-          piece.dataset.num = num;
-          let isDragging = false;
-          
+          piece.dataset.index = idx;
+
+          // Append early so we can measure size (responsive)
+          puzzleBoard.appendChild(piece);
+
+          const w = piece.offsetWidth || 80;
+          const h = piece.offsetHeight || 80;
+
+          piece.style.backgroundImage = `url("${heartSVG}")`;
+          piece.style.backgroundRepeat = 'no-repeat';
+          piece.style.backgroundSize = `${w * piecesCount}px ${h}px`;
+          piece.style.backgroundPosition = `${-idx * w}px 0px`;
+          piece.textContent = '';
+
           piece.addEventListener('dragstart', (e) => {
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', num);
+            e.dataTransfer.setData('text/plain', idx);
             piece.classList.add('dragging');
-            isDragging = true;
-          });
-          
-          piece.addEventListener('dragend', () => {
-            piece.classList.remove('dragging');
-            isDragging = false;
           });
 
-          // Touch support for mobile
+          piece.addEventListener('dragend', () => {
+            piece.classList.remove('dragging');
+          });
+
+          // Touch support for mobile: detect where touch ended and drop into slot
+          // Touch-follow drag: piece will follow finger while touching
           piece.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            piece.classList.add('dragging');
-            piece.dataset.touchX = e.touches[0].clientX;
-            piece.dataset.touchY = e.touches[0].clientY;
-          });
+            const touch = e.touches[0];
+            piece.classList.add('dragging', 'moving');
+
+            // Keep size to avoid layout jump
+            const rect = piece.getBoundingClientRect();
+            piece.style.width = rect.width + 'px';
+            piece.style.height = rect.height + 'px';
+
+            // Move out of the grid into body to float above other elements
+            document.body.appendChild(piece);
+            piece.style.position = 'fixed';
+            piece.style.left = (touch.clientX - rect.width / 2) + 'px';
+            piece.style.top = (touch.clientY - rect.height / 2) + 'px';
+            piece.style.zIndex = 3001;
+          }, { passive: false });
+
+          piece.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            piece.style.left = (touch.clientX - piece.offsetWidth / 2) + 'px';
+            piece.style.top = (touch.clientY - piece.offsetHeight / 2) + 'px';
+          }, { passive: false });
 
           piece.addEventListener('touchend', (e) => {
             const touch = e.changedTouches[0];
             const element = document.elementFromPoint(touch.clientX, touch.clientY);
             const slot = element?.closest('.puzzle-slot');
-            
+            const pieceIndex = parseInt(piece.dataset.index, 10);
+
             if (slot) {
-              const correctNum = parseInt(slot.dataset.correctNum);
-              if (num === correctNum) {
+              const correctIndex = parseInt(slot.dataset.correctIndex, 10);
+              if (pieceIndex === correctIndex) {
                 const content = document.createElement('div');
                 content.className = 'puzzle-slot-content';
-                content.textContent = num;
+                const sw = slot.offsetWidth || piece.offsetWidth;
+                const sh = slot.offsetHeight || piece.offsetHeight;
+                content.style.backgroundImage = `url("${heartSVG}")`;
+                content.style.backgroundRepeat = 'no-repeat';
+                content.style.backgroundSize = `${sw * piecesCount}px ${sh}px`;
+                content.style.backgroundPosition = `${-pieceIndex * sw}px 0px`;
                 slot.innerHTML = '';
                 slot.appendChild(content);
                 slot.classList.add('filled');
                 piece.remove();
                 setTimeout(checkPuzzleComplete, 300);
+              } else {
+                // incorrect slot: return piece to board
+                piece.style.position = '';
+                piece.style.left = '';
+                piece.style.top = '';
+                piece.style.zIndex = '';
+                piece.classList.remove('moving');
+                puzzleBoard.appendChild(piece);
               }
+            } else {
+              // dropped outside any slot: return to board
+              piece.style.position = '';
+              piece.style.left = '';
+              piece.style.top = '';
+              piece.style.zIndex = '';
+              piece.classList.remove('moving');
+              puzzleBoard.appendChild(piece);
             }
             piece.classList.remove('dragging');
           });
-          
-          puzzleBoard.appendChild(piece);
         });
 
         // Add drag handlers to slots
@@ -370,21 +439,27 @@
           
           slot.addEventListener('drop', (e) => {
             e.preventDefault();
-            const num = parseInt(e.dataTransfer.getData('text/plain'));
-            const correctNum = parseInt(slot.dataset.correctNum);
-            
-            if (num === correctNum) {
+            const idx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+            const correctIdx = parseInt(slot.dataset.correctIndex, 10);
+
+            if (idx === correctIdx) {
               const content = document.createElement('div');
               content.className = 'puzzle-slot-content';
-              content.textContent = num;
+              const w = slot.offsetWidth || 80;
+              const h = slot.offsetHeight || 80;
+              content.style.backgroundImage = `url("${heartSVG}")`;
+              content.style.backgroundRepeat = 'no-repeat';
+              content.style.backgroundSize = `${w * piecesCount}px ${h}px`;
+              content.style.backgroundPosition = `${-idx * w}px 0px`;
+
               slot.innerHTML = '';
               slot.appendChild(content);
               slot.classList.add('filled');
-              
+
               // Remove piece from board
-              const piece = document.querySelector(`[data-num="${num}"]`);
+              const piece = document.querySelector(`[data-index="${idx}"]`);
               if (piece) piece.remove();
-              
+
               // Check if all slots are filled
               setTimeout(checkPuzzleComplete, 300);
             } else {
