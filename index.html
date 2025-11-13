@@ -9,6 +9,13 @@
 <body>
   <div class="container">
     <button class="btn" id="loveBtn">Kliknij żeby odkryć niespodziankę</button>
+    
+    <div class="paper-card" id="paperCard" style="display: none;">
+      <button class="close-btn" id="closePaperBtn">&times;</button>
+      <div class="paper-content">
+        <p>✨ Miracles happen when you follow your heart ✨</p>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -173,7 +180,10 @@
           if (Math.random() < 0.4) createSpark(btnCenterX, btnCenterY);
         }
 
-        // trzeci przycisk jest ostateczny - nic się już nie zmienia
+        // show the paper card after a short delay
+        setTimeout(() => {
+          showPaperCard();
+        }, 400);
       });
     }
 
@@ -205,6 +215,17 @@
           particle.remove();
         }
       }, 900);
+    }
+
+    function showPaperCard() {
+      const paperCard = document.getElementById('paperCard');
+      paperCard.style.display = 'flex';
+      
+      // attach close button listener
+      const closeBtn = document.getElementById('closePaperBtn');
+      closeBtn.addEventListener('click', () => {
+        paperCard.style.display = 'none';
+      });
     }
   </script>
 
