@@ -100,383 +100,148 @@
         }
       </script>
 
-      <!-- Additional scripts: puzzle-background fix + Snake game -->
-      <script>
-        // Fix puzzle image encoding: use base64 and percent-based slicing
-        (function fixPuzzleBackgrounds() {
-          // Replace the heartSVG generation inside showPaperCard by wrapping it to use base64 and percent slicing
-          const original = showPaperCard;
-          window.showPaperCard = function() {
-            // Monkey patch: before invoking original, replace the rawSvg->heartSVG creation inside the function
-            // This simple approach will redefine global variables used when pieces are created.
-            // Use base64 encoding to avoid any URL-encoding issues.
-            const rawSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='360' height='120' viewBox='0 0 360 120'>
+      <!doctype html>
+      <html lang="pl">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Skibidi</title>
+        <link rel="stylesheet" href="styles.css">
+      </head>
+      <body>
+        <div class="container">
+          <button class="btn" id="loveBtn">Kliknij żeby odkryć niespodziankę</button>
+
+          <div class="paper-card" id="paperCard" style="display: none;">
+            <svg class="burn-svg" viewBox="0 0 800 1000" preserveAspectRatio="none">
               <defs>
-                <linearGradient id='g' x1='0' x2='1'>
-                  <stop offset='0' stop-color='%23ff9fc8' />
-                  <stop offset='0.5' stop-color='%23ff6aa6' />
-                  <stop offset='1' stop-color='%23ff2d95' />
-                </linearGradient>
+                <filter id="burnBlur"><feGaussianBlur in="SourceGraphic" stdDeviation="3" /></filter>
+                <radialGradient id="burnGrad1" cx="0%" cy="0%"><stop offset="0%" style="stop-color:#000000;stop-opacity:0.95" /><stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" /></radialGradient>
+                <radialGradient id="burnGrad2" cx="100%" cy="0%"><stop offset="0%" style="stop-color:#000000;stop-opacity:0.95" /><stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" /></radialGradient>
+                <radialGradient id="burnGrad3" cx="0%" cy="100%"><stop offset="0%" style="stop-color:#000000;stop-opacity:0.95" /><stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" /></radialGradient>
+                <radialGradient id="burnGrad4" cx="100%" cy="100%"><stop offset="0%" style="stop-color:#000000;stop-opacity:0.95" /><stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" /></radialGradient>
               </defs>
-              <rect width='360' height='120' rx='16' fill='%23fff4f8' />
-              <g transform='translate(40,10) scale(1)'>
-                <path d='M150 20c-30-28-78-27-107 3c-25 25-28 64-7 90c21 26 67 54 117 88c50-34 96-62 117-88c21-26 18-65-7-90c-24-24-74-26-113-3z' fill='url(%23g)' stroke='%23c01a6b' stroke-width='3' />
-              </g>
-            </svg>`;
-            // robust base64 encoding for arbitrary unicode
-            const heartSVG = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(rawSvg)));
+              <circle cx="750" cy="50" r="150" fill="url(#burnGrad1)" filter="url(#burnBlur)" />
+              <circle cx="50" cy="50" r="150" fill="url(#burnGrad2)" filter="url(#burnBlur)" />
+              <circle cx="750" cy="950" r="150" fill="url(#burnGrad3)" filter="url(#burnBlur)" />
+              <circle cx="50" cy="950" r="150" fill="url(#burnGrad4)" filter="url(#burnBlur)" />
+            </svg>
+            <button class="close-btn" id="closePaperBtn">&times;</button>
+            <div class="paper-content">
+              <p id="letterText">KOCHAM CIĘ MÓJ SKARBIE ❤️</p>
+            </div>
+          </div>
 
-            // Also patch the functions that create pieces by defining a helper on window used below
-            window.__PUZZLE_HEART_SVG = heartSVG;
-            window.__PUZZLE_PIECES_COUNT = 3;
+          <div class="puzzle-modal" id="puzzleModal" style="display: none;">
+            <div class="puzzle-container">
+              <div class="puzzle-message" id="puzzleMessage">Ułóż kawałki serca, moja miłości — zasługujesz na niespodziankę ❤️</div>
+              <div class="puzzle-board" id="puzzleBoard"></div>
+              <div class="puzzle-slots" id="puzzleSlots"></div>
+            </div>
+          </div>
+        </div>
 
-            // Call original to run the puzzle flow
-            original.call(this);
-          };
-        })();
+        <!-- Boredom button (hidden until letter shown) -->
+        <button id="boredBtn" class="btn bored-btn" style="display:none;">Kliknij mnie jak ci sie nudzi</button>
 
-        // Snake game implementation
-        (function(){
+        <!-- Snake modal / game (hidden) -->
+        <div id="snakeModal" class="snake-modal" style="display:none;">
+          <div class="snake-ui">
+            <div class="snake-header">
+              <div class="snake-score">Punkty: <span id="snakeScore">0</span></div>
+              <button id="closeSnake" class="close-btn">&times;</button>
+            </div>
+            <canvas id="snakeCanvas" width="400" height="400"></canvas>
+            <div class="snake-controls">
+              <button id="snakeRestart" class="btn">Restart</button>
+            </div>
+          </div>
+        </div>
+
+        <script>
+          // Consolidated JS: keeps original button flow and puzzle -> letter behavior.
+          const container = document.querySelector('.container');
+          let loveBtn = document.getElementById('loveBtn');
+          const puzzleModal = document.getElementById('puzzleModal');
+          const puzzleBoard = document.getElementById('puzzleBoard');
+          const puzzleSlots = document.getElementById('puzzleSlots');
+          const paperCard = document.getElementById('paperCard');
+          const closePaperBtn = document.getElementById('closePaperBtn');
           const boredBtn = document.getElementById('boredBtn');
-          const snakeModal = document.getElementById('snakeModal');
-          const closeSnake = document.getElementById('closeSnake');
-          const snakeCanvas = document.getElementById('snakeCanvas');
-          const ctx = snakeCanvas.getContext('2d');
-          const scoreEl = document.getElementById('snakeScore');
-          const snakeRestart = document.getElementById('snakeRestart');
 
-          let grid = 20; // cell size
-          let cols = Math.floor(snakeCanvas.width / grid);
-          let rows = Math.floor(snakeCanvas.height / grid);
-          let snake = [{x: Math.floor(cols/2), y: Math.floor(rows/2)}];
-          let dir = {x:1, y:0};
-          let food = null;
-          let gameInterval = null;
-          let score = 0;
-          let speed = 120; // ms
+          const heartEmojis = ['❤','💗','💖','💞','💕','❣️'];
 
-          function placeFood() {
-            food = {
-              x: Math.floor(Math.random() * cols),
-              y: Math.floor(Math.random() * rows)
-            };
-            // avoid placing on snake
-            if (snake.some(s=>s.x===food.x && s.y===food.y)) placeFood();
+          function createHeart(x,y){
+            const heart=document.createElement('span'); heart.className='heart'; heart.innerText = heartEmojis[Math.floor(Math.random()*heartEmojis.length)];
+            const rect=container.getBoundingClientRect(); heart.style.left=(x-rect.left-12)+'px'; heart.style.top=(y-rect.top-12)+'px'; heart.style.pointerEvents='none';
+            const size=Math.floor(Math.random()*22)+16; heart.style.fontSize=size+'px'; heart.style.opacity=(Math.random()*0.4+0.6).toString();
+            const dx=Math.floor((Math.random()-0.5)*220); const rot=Math.floor((Math.random()-0.5)*720); const dur=(1.2+Math.random()*1.4).toFixed(2)+'s';
+            heart.style.setProperty('--dx', dx+'px'); heart.style.setProperty('--rot', rot+'deg'); heart.style.animationDuration=dur; container.appendChild(heart);
+            setTimeout(()=>heart.remove(), parseFloat(dur)*1000+300);
           }
 
-          function draw() {
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(0,0,snakeCanvas.width,snakeCanvas.height);
+          function createSpark(x,y){ const spark=document.createElement('span'); spark.className='spark'; const rect=container.getBoundingClientRect(); spark.style.left=(x-rect.left-4+(Math.random()-0.5)*24)+'px'; spark.style.top=(y-rect.top-4+(Math.random()-0.5)*12)+'px'; container.appendChild(spark); setTimeout(()=>spark.remove(),1000); }
 
-            // draw food
-            if (food) {
-              ctx.fillStyle = '#ff2d95';
-              ctx.fillRect(food.x*grid, food.y*grid, grid, grid);
-            }
+          function createBurstParticle(x,y,angle){ const p=document.createElement('span'); p.className='burst-particle'; p.innerHTML = ['✨','💫','⭐'][Math.floor(Math.random()*3)]; const rect=container.getBoundingClientRect(); p.style.position='absolute'; p.style.left=(x-rect.left)+'px'; p.style.top=(y-rect.top)+'px'; p.style.pointerEvents='none'; const dist=120; p.style.setProperty('--tx', Math.cos(angle)*dist+'px'); p.style.setProperty('--ty', Math.sin(angle)*dist+'px'); p.style.animation='burstFloat 0.8s ease-out forwards'; container.appendChild(p); setTimeout(()=>p.remove(),900); }
 
-            // draw snake
-            for (let i=0;i<snake.length;i++){
-              ctx.fillStyle = i===0 ? '#fff' : '#ff99c8';
-              ctx.fillRect(snake[i].x*grid, snake[i].y*grid, grid-1, grid-1);
-            }
-          }
-
-          function step() {
-            const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
-            // wrap-around
-            if (head.x < 0) head.x = cols-1;
-            if (head.x >= cols) head.x = 0;
-            if (head.y < 0) head.y = rows-1;
-            if (head.y >= rows) head.y = 0;
-
-            // check collision with self
-            if (snake.some(s => s.x === head.x && s.y === head.y)) {
-              gameOver();
-              return;
-            }
-
-            snake.unshift(head);
-
-            // eat food
-            if (food && head.x === food.x && head.y === food.y) {
-              score += 1;
-              scoreEl.textContent = score;
-              placeFood();
-            } else {
-              snake.pop();
-            }
-
-            draw();
-          }
-
-          function startGame() {
-            // reset
-            grid = 20;
-            cols = Math.floor(snakeCanvas.width / grid);
-            rows = Math.floor(snakeCanvas.height / grid);
-            snake = [{x: Math.floor(cols/2), y: Math.floor(rows/2)}];
-            dir = {x:1,y:0};
-            score = 0;
-            scoreEl.textContent = score;
-            placeFood();
-            if (gameInterval) clearInterval(gameInterval);
-            gameInterval = setInterval(step, speed);
-          }
-
-          function gameOver() {
-            clearInterval(gameInterval);
-            gameInterval = null;
-            alert('Koniec gry! Twój wynik: ' + score);
-          }
-
-          // Controls
-          window.addEventListener('keydown', (e) => {
-            const k = e.key;
-            if (k === 'ArrowUp' && dir.y === 0) { dir = {x:0, y:-1}; }
-            if (k === 'ArrowDown' && dir.y === 0) { dir = {x:0, y:1}; }
-            if (k === 'ArrowLeft' && dir.x === 0) { dir = {x:-1, y:0}; }
-            if (k === 'ArrowRight' && dir.x === 0) { dir = {x:1, y:0}; }
+          // initial click
+          loveBtn.addEventListener('click', (e)=>{
+            const r=loveBtn.getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2;
+            for(let i=0;i<15;i++){ const rx=r.left+Math.random()*r.width; const ry=r.top+Math.random()*r.height; createHeart(rx,ry); if (Math.random()<0.4) createSpark(cx,cy); }
+            setTimeout(()=>createNewButton(),600);
           });
 
-          // Touch swipe for mobile
-          (function(){
-            let startX=0, startY=0;
-            snakeCanvas.addEventListener('touchstart', (e)=>{
-              const t=e.touches[0]; startX=t.clientX; startY=t.clientY;
-            }, {passive:true});
-            snakeCanvas.addEventListener('touchend', (e)=>{
-              const t=e.changedTouches[0]; const dx=t.clientX-startX; const dy=t.clientY-startY;
-              if (Math.abs(dx)>Math.abs(dy)) {
-                if (dx>10 && dir.x===0) dir={x:1,y:0};
-                if (dx<-10 && dir.x===0) dir={x:-1,y:0};
-              } else {
-                if (dy>10 && dir.y===0) dir={x:0,y:1};
-                if (dy<-10 && dir.y===0) dir={x:0,y:-1};
-              }
-            }, {passive:true});
+          function createNewButton(){ const newBtn=document.createElement('button'); newBtn.className='btn btn-appear'; newBtn.innerText='Spróbuj jeszcze raz'; loveBtn.parentNode.replaceChild(newBtn,loveBtn); loveBtn=newBtn; const r=newBtn.getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2; for(let i=0;i<8;i++) createBurstParticle(cx+Math.cos(i/8*Math.PI*2)*80, cy+Math.sin(i/8*Math.PI*2)*80, i/8*Math.PI*2); newBtn.addEventListener('click', ()=>{ for(let i=0;i<15;i++){ const rx=r.left+Math.random()*r.width; const ry=r.top+Math.random()*r.height; createHeart(rx,ry); if(Math.random()<0.4) createSpark(cx,cy);} setTimeout(()=>createThirdButton(),600); }); }
+
+          function createThirdButton(){ const third=document.createElement('button'); third.className='btn btn-appear'; third.innerText='Coś nie pykło'; const cur=container.querySelector('.btn'); cur.parentNode.replaceChild(third,cur); loveBtn=third; const r=third.getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2; for(let i=0;i<8;i++) createBurstParticle(cx+Math.cos(i/8*Math.PI*2)*80, cy+Math.sin(i/8*Math.PI*2)*80, i/8*Math.PI*2); third.addEventListener('click', ()=>{ for(let i=0;i<15;i++){ const rx=r.left+Math.random()*r.width; const ry=r.top+Math.random()*r.height; createHeart(rx,ry); if(Math.random()<0.4) createSpark(cx,cy);} setTimeout(()=>showPaperCard(),400); }); }
+
+          // puzzle + letter
+          function showPaperCard(){ puzzleBoard.innerHTML=''; puzzleSlots.innerHTML=''; puzzleModal.style.display='flex'; const prevOverflow=document.body.style.overflow; document.body.style.overflow='hidden'; puzzleModal.ontouchmove = ev => ev.preventDefault(); setTimeout(()=>{
+            const piecesCount=3; const indices=Array.from({length:piecesCount},(_,i)=>i); const shuffled=indices.sort(()=>Math.random()-0.5);
+            const rawSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='360' height='120' viewBox='0 0 360 120'><defs><linearGradient id='g' x1='0' x2='1'><stop offset='0' stop-color='%23ff9fc8'/><stop offset='0.5' stop-color='%23ff6aa6'/><stop offset='1' stop-color='%23ff2d95'/></linearGradient></defs><rect width='360' height='120' rx='16' fill='%23fff4f8'/><g transform='translate(40,10) scale(1)'><path d='M150 20c-30-28-78-27-107 3c-25 25-28 64-7 90c21 26 67 54 117 88c50-34 96-62 117-88c21-26 18-65-7-90c-24-24-74-26-113-3z' fill='url(%23g)' stroke='%23c01a6b' stroke-width='3'/></g></svg>`;
+            const heartSVG = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(rawSvg)));
+            // slots
+            indices.forEach((n,idx)=>{ const slot=document.createElement('div'); slot.className='puzzle-slot'; slot.dataset.correctIndex = n; slot.id = `slot-${idx}`; puzzleSlots.appendChild(slot); });
+            // pieces
+            shuffled.forEach(idx=>{ const piece=document.createElement('div'); piece.className='puzzle-piece'; piece.draggable=true; piece.dataset.index = idx; puzzleBoard.appendChild(piece); piece.style.backgroundImage = `url("${heartSVG}")`; piece.style.backgroundSize = `${piecesCount*100}% 100%`; const pos = piecesCount>1 ? (idx*(100/(piecesCount-1))) : 50; piece.style.backgroundPosition = `${pos}% 0%`;
+              // drag
+              piece.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', idx); piece.classList.add('dragging'); }); piece.addEventListener('dragend', ()=>piece.classList.remove('dragging'));
+              // touch-follow
+              piece.addEventListener('touchstart', e=>{ e.preventDefault(); const t=e.touches[0]; piece.classList.add('dragging','moving'); const rect=piece.getBoundingClientRect(); piece.style.width = rect.width+'px'; piece.style.height = rect.height+'px'; document.body.appendChild(piece); piece.style.position='fixed'; piece.style.left=(t.clientX-rect.width/2)+'px'; piece.style.top=(t.clientY-rect.height/2)+'px'; piece.style.zIndex=3001; }, {passive:false});
+              piece.addEventListener('touchmove', e=>{ e.preventDefault(); const t=e.touches[0]; piece.style.left=(t.clientX-piece.offsetWidth/2)+'px'; piece.style.top=(t.clientY-piece.offsetHeight/2)+'px'; }, {passive:false});
+              piece.addEventListener('touchend', e=>{ const t=e.changedTouches[0]; const el = document.elementFromPoint(t.clientX, t.clientY); const slot = el?.closest('.puzzle-slot'); const pidx = parseInt(piece.dataset.index,10); if (slot){ const correct = parseInt(slot.dataset.correctIndex,10); if (pidx===correct){ const content=document.createElement('div'); content.className='puzzle-slot-content'; content.style.backgroundImage = `url("${heartSVG}")`; content.style.backgroundSize = `${piecesCount*100}% 100%`; const p = piecesCount>1 ? (pidx*(100/(piecesCount-1))) : 50; content.style.backgroundPosition = `${p}% 0%`; slot.innerHTML=''; slot.appendChild(content); slot.classList.add('filled'); piece.remove(); setTimeout(checkPuzzleComplete,300); return; } }
+                // return
+                piece.style.position=''; piece.style.left=''; piece.style.top=''; piece.style.zIndex=''; piece.classList.remove('moving'); puzzleBoard.appendChild(piece); piece.classList.remove('dragging'); });
+            });
+            // drop handlers
+            document.querySelectorAll('.puzzle-slot').forEach(slot=>{ slot.addEventListener('dragover', e=>{ e.preventDefault(); slot.style.background='#FFE4F0'; }); slot.addEventListener('dragleave', ()=> slot.style.background='#f0f0f0'); slot.addEventListener('drop', e=>{ e.preventDefault(); const idx=parseInt(e.dataTransfer.getData('text/plain'),10); const correct=parseInt(slot.dataset.correctIndex,10); if (idx===correct){ const content=document.createElement('div'); content.className='puzzle-slot-content'; content.style.backgroundImage = `url("${heartSVG}")`; content.style.backgroundSize = `${piecesCount*100}% 100%`; const p = piecesCount>1 ? (idx*(100/(piecesCount-1))) : 50; content.style.backgroundPosition = `${p}% 0%`; slot.innerHTML=''; slot.appendChild(content); slot.classList.add('filled'); const piece = document.querySelector(`[data-index="${idx}"]`); if (piece) piece.remove(); setTimeout(checkPuzzleComplete,300); } else slot.style.background='#f0f0f0'; }); });
+            // outside click
+            puzzleModal.addEventListener('click', ev=>{ if (ev.target===puzzleModal){ puzzleModal.style.display='none'; document.body.style.overflow = prevOverflow || ''; puzzleModal.ontouchmove = null; } });
+          }, 3000);
+          }
+
+          function checkPuzzleComplete(){ const slots = document.querySelectorAll('.puzzle-slot'); const all = Array.from(slots).every(s=>s.classList.contains('filled')); if (all){ setTimeout(()=>{ puzzleModal.style.display='none'; document.body.style.overflow=''; puzzleModal.ontouchmove=null; paperCard.style.display='flex'; // now show bored button
+              boredBtn.style.display = 'block'; }, 500); } }
+
+          closePaperBtn.addEventListener('click', ()=> paperCard.style.display='none');
+
+          // --- Snake game (only starts when boredBtn shown and clicked) ---
+          (function(){ const snakeModal = document.getElementById('snakeModal'); const closeSnake = document.getElementById('closeSnake'); const snakeCanvas = document.getElementById('snakeCanvas'); const ctx = snakeCanvas.getContext('2d'); const scoreEl = document.getElementById('snakeScore'); const snakeRestart = document.getElementById('snakeRestart'); let grid=20; let cols=Math.floor(snakeCanvas.width/grid); let rows=Math.floor(snakeCanvas.height/grid); let snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}]; let dir={x:1,y:0}; let food=null; let gameInterval=null; let score=0; let speed=120;
+            function placeFood(){ food={x:Math.floor(Math.random()*cols), y:Math.floor(Math.random()*rows)}; if (snake.some(s=>s.x===food.x && s.y===food.y)) placeFood(); }
+            function drawSnake(){ ctx.fillStyle='#000'; ctx.fillRect(0,0,snakeCanvas.width,snakeCanvas.height); if (food){ ctx.fillStyle='#ff2d95'; ctx.fillRect(food.x*grid, food.y*grid, grid, grid); } for(let i=0;i<snake.length;i++){ ctx.fillStyle = i===0? '#fff' : '#ff99c8'; ctx.fillRect(snake[i].x*grid, snake[i].y*grid, grid-1, grid-1); } }
+            function step(){ const head={x:snake[0].x+dir.x, y:snake[0].y+dir.y}; if (head.x<0) head.x=cols-1; if (head.x>=cols) head.x=0; if (head.y<0) head.y=rows-1; if (head.y>=rows) head.y=0; if (snake.some(s=>s.x===head.x && s.y===head.y)){ gameOver(); return; } snake.unshift(head); if (food && head.x===food.x && head.y===food.y){ score++; scoreEl.textContent=score; placeFood(); } else snake.pop(); drawSnake(); }
+            function startGame(){ grid=20; cols=Math.floor(snakeCanvas.width/grid); rows=Math.floor(snakeCanvas.height/grid); snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}]; dir={x:1,y:0}; score=0; scoreEl.textContent=score; placeFood(); if (gameInterval) clearInterval(gameInterval); gameInterval=setInterval(step,speed); }
+            function gameOver(){ clearInterval(gameInterval); gameInterval=null; alert('Koniec gry! Twój wynik: '+score); }
+            window.addEventListener('keydown', e=>{ const k=e.key; if (k==='ArrowUp'&&dir.y===0) dir={x:0,y:-1}; if (k==='ArrowDown'&&dir.y===0) dir={x:0,y:1}; if (k==='ArrowLeft'&&dir.x===0) dir={x:-1,y:0}; if (k==='ArrowRight'&&dir.x===0) dir={x:1,y:0}; });
+            (function(){ let sx=0, sy=0; snakeCanvas.addEventListener('touchstart', e=>{ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; }, {passive:true}); snakeCanvas.addEventListener('touchend', e=>{ const t=e.changedTouches[0]; const dx=t.clientX-sx, dy=t.clientY-sy; if (Math.abs(dx)>Math.abs(dy)){ if (dx>10 && dir.x===0) dir={x:1,y:0}; if (dx<-10 && dir.x===0) dir={x:-1,y:0}; } else { if (dy>10 && dir.y===0) dir={x:0,y:1}; if (dy<-10 && dir.y===0) dir={x:0,y:-1}; } }, {passive:true}); })();
+            boredBtn.addEventListener('click', ()=>{ snakeModal.style.display='flex'; startGame(); });
+            closeSnake.addEventListener('click', ()=>{ snakeModal.style.display='none'; if (gameInterval) clearInterval(gameInterval); gameInterval=null; });
+            snakeRestart.addEventListener('click', ()=> startGame());
           })();
 
-          // UI handlers
-          boredBtn.addEventListener('click', ()=>{
-            snakeModal.style.display = 'flex';
-            startGame();
-          });
-
-          closeSnake.addEventListener('click', ()=>{
-            snakeModal.style.display = 'none';
-            if (gameInterval) clearInterval(gameInterval);
-            gameInterval = null;
-          });
-
-          snakeRestart.addEventListener('click', ()=>{
-            startGame();
-          });
-        })();
-      </script>
-
-    </body>
-    </html>
-
-    function createBurstParticle(x, y, angle) {
-      const particle = document.createElement('span');
-      particle.className = 'burst-particle';
-      particle.innerHTML = ['✨', '💫', '⭐'][Math.floor(Math.random() * 3)];
-      
-      const rect = container.getBoundingClientRect();
-      particle.style.left = (x - rect.left) + 'px';
-      particle.style.top = (y - rect.top) + 'px';
-      particle.style.position = 'absolute';
-      particle.style.fontSize = '20px';
-      particle.style.pointerEvents = 'none';
-      particle.style.willChange = 'transform, opacity';
-      
-      // calculate translation
-      const distance = 120;
-      const tx = Math.cos(angle) * distance;
-      const ty = Math.sin(angle) * distance;
-      
-      particle.style.setProperty('--tx', tx + 'px');
-      particle.style.setProperty('--ty', ty + 'px');
-      particle.style.animation = `burstFloat 0.8s ease-out forwards`;
-      
-      container.appendChild(particle);
-      setTimeout(() => {
-        if (particle.parentNode) {
-          particle.remove();
-        }
-      }, 900);
-    }
-
-    function showPaperCard() {
-      const puzzleModal = document.getElementById('puzzleModal');
-      const puzzleBoard = document.getElementById('puzzleBoard');
-      const puzzleSlots = document.getElementById('puzzleSlots');
-      
-      // Clear previous puzzle
-      puzzleBoard.innerHTML = '';
-      puzzleSlots.innerHTML = '';
-      
-      // Show puzzle message first and disable page scrolling
-      puzzleModal.style.display = 'flex';
-      const prevOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-
-      // prevent touchmove from triggering pull-to-refresh or page scroll while modal is open
-      puzzleModal.ontouchmove = function(ev) { ev.preventDefault(); };
-
-      // Show puzzle elements after 3 seconds
-      setTimeout(() => {
-        // Create puzzle using image fragments (3 pieces)
-        const piecesCount = 3;
-        const indices = Array.from({ length: piecesCount }, (_, i) => i);
-        const shuffled = indices.sort(() => Math.random() - 0.5);
-        const correctOrder = indices.slice();
-
-        // Inline SVG heart (larger, more detailed) used as a single image split into fragments
-        const rawSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='360' height='120' viewBox='0 0 360 120'>
-          <defs>
-            <linearGradient id='g' x1='0' x2='1'>
-              <stop offset='0' stop-color='%23ff9fc8' />
-              <stop offset='0.5' stop-color='%23ff6aa6' />
-              <stop offset='1' stop-color='%23ff2d95' />
-            </linearGradient>
-            <filter id='grain'>
-              <feTurbulence baseFrequency='0.8' numOctaves='1' stitchTiles='stitch'/>
-              <feColorMatrix type='saturate' values='0.2' />
-              <feBlend mode='overlay' in2='SourceGraphic'/>
-            </filter>
-          </defs>
-          <rect width='360' height='120' rx='16' fill='%23fff4f8' />
-          <g transform='translate(40,10) scale(1)'>
-            <path d='M150 20c-30-28-78-27-107 3c-25 25-28 64-7 90c21 26 67 54 117 88c50-34 96-62 117-88c21-26 18-65-7-90c-24-24-74-26-113-3z' fill='url(%23g)' stroke='%23c01a6b' stroke-width='3' />
-          </g>
-        </svg>`;
-        const heartSVG = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(rawSvg)));
-
-        // Create slots first (in correct order)
-        correctOrder.forEach((num, idx) => {
-          const slot = document.createElement('div');
-          slot.className = 'puzzle-slot';
-          slot.dataset.correctIndex = num;
-          slot.dataset.index = idx;
-          slot.id = `slot-${idx}`;
-          puzzleSlots.appendChild(slot);
-        });
-
-        // Create draggable pieces as image fragments
-        shuffled.forEach(idx => {
-          const piece = document.createElement('div');
-          piece.className = 'puzzle-piece';
-          piece.draggable = true;
-          piece.dataset.index = idx;
-
-          // Append early so we can measure size (responsive)
-          puzzleBoard.appendChild(piece);
-
-          const w = piece.offsetWidth || 80;
-          const h = piece.offsetHeight || 80;
-
-          piece.style.backgroundImage = `url("${heartSVG}")`;
-          piece.style.backgroundRepeat = 'no-repeat';
-          piece.style.backgroundSize = `${piecesCount * 100}% 100%`;
-          const posPercent = piecesCount > 1 ? (idx * (100 / (piecesCount - 1))) : 50;
-          piece.style.backgroundPosition = `${posPercent}% 0%`;
-          piece.textContent = '';
-
-          piece.addEventListener('dragstart', (e) => {
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', idx);
-            piece.classList.add('dragging');
-          });
-
-          piece.addEventListener('dragend', () => {
-            piece.classList.remove('dragging');
-          });
-
-          // Touch support for mobile: detect where touch ended and drop into slot
-          // Touch-follow drag: piece will follow finger while touching
-          piece.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            piece.classList.add('dragging', 'moving');
-
-            // Keep size to avoid layout jump
-            const rect = piece.getBoundingClientRect();
-            piece.style.width = rect.width + 'px';
-            piece.style.height = rect.height + 'px';
-
-            // Move out of the grid into body to float above other elements
-            document.body.appendChild(piece);
-            piece.style.position = 'fixed';
-            piece.style.left = (touch.clientX - rect.width / 2) + 'px';
-            piece.style.top = (touch.clientY - rect.height / 2) + 'px';
-            piece.style.zIndex = 3001;
-          }, { passive: false });
-
-          piece.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            piece.style.left = (touch.clientX - piece.offsetWidth / 2) + 'px';
-            piece.style.top = (touch.clientY - piece.offsetHeight / 2) + 'px';
-          }, { passive: false });
-
-          piece.addEventListener('touchend', (e) => {
-            const touch = e.changedTouches[0];
-            const element = document.elementFromPoint(touch.clientX, touch.clientY);
-            const slot = element?.closest('.puzzle-slot');
-            const pieceIndex = parseInt(piece.dataset.index, 10);
-
-            if (slot) {
-              const correctIndex = parseInt(slot.dataset.correctIndex, 10);
-              if (pieceIndex === correctIndex) {
-                const content = document.createElement('div');
-                content.className = 'puzzle-slot-content';
-                const sw = slot.offsetWidth || piece.offsetWidth;
-                const sh = slot.offsetHeight || piece.offsetHeight;
-                content.style.backgroundImage = `url("${heartSVG}")`;
-                content.style.backgroundRepeat = 'no-repeat';
-                content.style.backgroundSize = `${piecesCount * 100}% 100%`;
-                const posP = piecesCount > 1 ? (pieceIndex * (100 / (piecesCount - 1))) : 50;
-                content.style.backgroundPosition = `${posP}% 0%`;
-                slot.innerHTML = '';
-                slot.appendChild(content);
-                slot.classList.add('filled');
-                piece.remove();
-                setTimeout(checkPuzzleComplete, 300);
-              } else {
-                // incorrect slot: return piece to board
-                piece.style.position = '';
-                piece.style.left = '';
-                piece.style.top = '';
-                piece.style.zIndex = '';
-                piece.classList.remove('moving');
-                puzzleBoard.appendChild(piece);
-              }
-            } else {
-              // dropped outside any slot: return to board
-              piece.style.position = '';
-              piece.style.left = '';
-              piece.style.top = '';
-              piece.style.zIndex = '';
-              piece.classList.remove('moving');
-              puzzleBoard.appendChild(piece);
-            }
-            piece.classList.remove('dragging');
-          });
-        });
-
-        // Add drag handlers to slots
-        const slots = document.querySelectorAll('.puzzle-slot');
-        slots.forEach(slot => {
-          slot.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            slot.style.background = '#FFE4F0';
-          });
-          
-          slot.addEventListener('dragleave', () => {
-            slot.style.background = '#f0f0f0';
-          });
+        </script>
+      </body>
+      </html>
           
           slot.addEventListener('drop', (e) => {
             e.preventDefault();
