@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KaraluszekMilenkowy</title>
+  <title>Skibidi</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -56,7 +56,7 @@
       </svg>
       <button class="close-btn" id="closePaperBtn">&times;</button>
       <div class="paper-content">
-        <p>✨ Miracles happen when you follow your heart ✨</p>
+        <p>KOCHAM CIĘ MÓJ SKARBIE ❤️</p>
       </div>
     </div>
 
@@ -304,14 +304,45 @@
           piece.textContent = num;
           piece.draggable = true;
           piece.dataset.num = num;
+          let isDragging = false;
           
           piece.addEventListener('dragstart', (e) => {
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', num);
             piece.classList.add('dragging');
+            isDragging = true;
           });
           
           piece.addEventListener('dragend', () => {
+            piece.classList.remove('dragging');
+            isDragging = false;
+          });
+
+          // Touch support for mobile
+          piece.addEventListener('touchstart', (e) => {
+            piece.classList.add('dragging');
+            piece.dataset.touchX = e.touches[0].clientX;
+            piece.dataset.touchY = e.touches[0].clientY;
+          });
+
+          piece.addEventListener('touchend', (e) => {
+            const touch = e.changedTouches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            const slot = element?.closest('.puzzle-slot');
+            
+            if (slot) {
+              const correctNum = parseInt(slot.dataset.correctNum);
+              if (num === correctNum) {
+                const content = document.createElement('div');
+                content.className = 'puzzle-slot-content';
+                content.textContent = num;
+                slot.innerHTML = '';
+                slot.appendChild(content);
+                slot.classList.add('filled');
+                piece.remove();
+                setTimeout(checkPuzzleComplete, 300);
+              }
+            }
             piece.classList.remove('dragging');
           });
           
