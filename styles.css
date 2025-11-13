@@ -265,7 +265,7 @@ body { margin: 0; display: flex; align-items: center; justify-content: center; b
 .puzzle-piece {
 	width: 80px;
 	height: 80px;
-	background: #FFB6D9;
+	background-color: transparent;
 	border-radius: 8px;
 	cursor: grab;
 	user-select: none;
@@ -452,3 +452,39 @@ body { margin: 0; display: flex; align-items: center; justify-content: center; b
 		font-size: 1.2rem;
 	}
 }
+
+/* Boredom button and Snake modal styles */
+.bored-btn {
+	position: fixed;
+	bottom: 18px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: #ff6aa6;
+	border-radius: 999px;
+	padding: 12px 18px;
+	z-index: 2500;
+}
+
+.snake-modal {
+	position: fixed;
+	inset: 0;
+	background: rgba(0,0,0,0.7);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 4000;
+}
+
+.snake-ui {
+	background: #111;
+	padding: 12px;
+	border-radius: 12px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.snake-header { width: 100%; display:flex; justify-content:space-between; align-items:center; color:#fff; margin-bottom:8px; }
+.snake-score { color:#fff; font-weight:700; }
+#snakeCanvas { background:#000; display:block; border-radius:8px; }
+.snake-controls { margin-top:8px; }
