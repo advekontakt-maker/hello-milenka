@@ -59,6 +59,14 @@
         <p>✨ Miracles happen when you follow your heart ✨</p>
       </div>
     </div>
+
+    <div class="puzzle-modal" id="puzzleModal" style="display: none;">
+      <div class="puzzle-container">
+        <div class="puzzle-message" id="puzzleMessage">ułóż puzzle, żeby przejść dalej</div>
+        <div class="puzzle-board" id="puzzleBoard"></div>
+        <div class="puzzle-slots" id="puzzleSlots"></div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -261,14 +269,112 @@
     }
 
     function showPaperCard() {
-      const paperCard = document.getElementById('paperCard');
-      paperCard.style.display = 'flex';
+      const puzzleModal = document.getElementById('puzzleModal');
+      const puzzleBoard = document.getElementById('puzzleBoard');
+      const puzzleSlots = document.getElementById('puzzleSlots');
       
-      // attach close button listener
-      const closeBtn = document.getElementById('closePaperBtn');
-      closeBtn.addEventListener('click', () => {
-        paperCard.style.display = 'none';
-      });
+      // Clear previous puzzle
+      puzzleBoard.innerHTML = '';
+      puzzleSlots.innerHTML = '';
+      
+      // Show puzzle message first
+      puzzleModal.style.display = 'flex';
+      
+      // Show puzzle elements after 3 seconds
+      setTimeout(() => {
+        // Create puzzle pieces (numbers 1-9 shuffled)
+        const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        const shuffled = numbers.sort(() => Math.random() - 0.5);
+        const correctOrder = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        
+        // Create slots first (in correct order)
+        correctOrder.forEach((num, idx) => {
+          const slot = document.createElement('div');
+          slot.className = 'puzzle-slot';
+          slot.dataset.correctNum = num;
+          slot.dataset.index = idx;
+          slot.id = `slot-${idx}`;
+          puzzleSlots.appendChild(slot);
+        });
+        
+        // Create draggable pieces
+        shuffled.forEach(num => {
+          const piece = document.createElement('div');
+          piece.className = 'puzzle-piece';
+          piece.textContent = num;
+          piece.draggable = true;
+          piece.dataset.num = num;
+          
+          piece.addEventListener('dragstart', (e) => {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', num);
+            piece.classList.add('dragging');
+          });
+          
+          piece.addEventListener('dragend', () => {
+            piece.classList.remove('dragging');
+          });
+          
+          puzzleBoard.appendChild(piece);
+        });
+        
+        // Add drag handlers to slots
+        const slots = document.querySelectorAll('.puzzle-slot');
+        slots.forEach(slot => {
+          slot.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            slot.style.background = '#FFE4F0';
+          });
+          
+          slot.addEventListener('dragleave', () => {
+            slot.style.background = '#f0f0f0';
+          });
+          
+          slot.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const num = parseInt(e.dataTransfer.getData('text/plain'));
+            const correctNum = parseInt(slot.dataset.correctNum);
+            
+            if (num === correctNum) {
+              const content = document.createElement('div');
+              content.className = 'puzzle-slot-content';
+              content.textContent = num;
+              slot.innerHTML = '';
+              slot.appendChild(content);
+              slot.classList.add('filled');
+              
+              // Remove piece from board
+              const piece = document.querySelector(`[data-num="${num}"]`);
+              if (piece) piece.remove();
+              
+              // Check if all slots are filled
+              setTimeout(checkPuzzleComplete, 300);
+            } else {
+              slot.style.background = '#f0f0f0';
+            }
+          });
+        });
+      }, 3000);
+    }
+    
+    function checkPuzzleComplete() {
+      const slots = document.querySelectorAll('.puzzle-slot');
+      const allFilled = Array.from(slots).every(slot => slot.classList.contains('filled'));
+      
+      if (allFilled) {
+        setTimeout(() => {
+          document.getElementById('puzzleModal').style.display = 'none';
+          const paperCard = document.getElementById('paperCard');
+          paperCard.style.display = 'flex';
+          
+          // Attach close button listener
+          const closeBtn = document.getElementById('closePaperBtn');
+          closeBtn.addEventListener('click', () => {
+            paperCard.style.display = 'none';
+          });
+        }, 500);
+      }
     }
   </script>
 

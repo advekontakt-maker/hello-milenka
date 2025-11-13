@@ -222,3 +222,100 @@ body { margin: 0; display: flex; align-items: center; justify-content: center; b
 .close-btn:hover {
 	color: #333;
 }
+
+/* Puzzle Modal */
+.puzzle-modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.6);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 2000;
+}
+
+.puzzle-container {
+	background: white;
+	padding: 40px;
+	border-radius: 15px;
+	box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+	max-width: 600px;
+	text-align: center;
+}
+
+.puzzle-message {
+	font-size: 1.5rem;
+	color: #FF69B4;
+	margin-bottom: 30px;
+	font-weight: 600;
+	letter-spacing: 0.5px;
+}
+
+.puzzle-board {
+	display: grid;
+	grid-template-columns: repeat(3, 80px);
+	gap: 8px;
+	margin-bottom: 30px;
+	justify-content: center;
+}
+
+.puzzle-piece {
+	width: 80px;
+	height: 80px;
+	background: #FFB6D9;
+	border-radius: 8px;
+	cursor: grab;
+	user-select: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 24px;
+	font-weight: bold;
+	color: white;
+	box-shadow: 0 4px 8px rgba(255, 105, 180, 0.4);
+	transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.puzzle-piece:hover {
+	transform: scale(1.05);
+	box-shadow: 0 6px 12px rgba(255, 105, 180, 0.6);
+}
+
+.puzzle-piece.dragging {
+	opacity: 0.7;
+	cursor: grabbing;
+}
+
+.puzzle-slots {
+	display: grid;
+	grid-template-columns: repeat(3, 80px);
+	gap: 8px;
+	justify-content: center;
+}
+
+.puzzle-slot {
+	width: 80px;
+	height: 80px;
+	background: #f0f0f0;
+	border: 2px dashed #FF69B4;
+	border-radius: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	transition: background 0.3s, border-color 0.3s;
+}
+
+.puzzle-slot.filled {
+	background: #FFB6D9;
+	border-color: #FF69B4;
+}
+
+.puzzle-slot-content {
+	font-size: 24px;
+	font-weight: bold;
+	color: white;
+}
