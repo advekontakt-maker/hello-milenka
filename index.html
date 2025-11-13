@@ -277,9 +277,14 @@
       puzzleBoard.innerHTML = '';
       puzzleSlots.innerHTML = '';
       
-      // Show puzzle message first
+      // Show puzzle message first and disable page scrolling
       puzzleModal.style.display = 'flex';
-      
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      // prevent touchmove from triggering pull-to-refresh or page scroll while modal is open
+      puzzleModal.ontouchmove = function(ev) { ev.preventDefault(); };
+
       // Show puzzle elements after 3 seconds
       setTimeout(() => {
         // Create puzzle pieces (numbers 1-9 shuffled)
@@ -320,6 +325,7 @@
 
           // Touch support for mobile
           piece.addEventListener('touchstart', (e) => {
+            e.preventDefault();
             piece.classList.add('dragging');
             piece.dataset.touchX = e.touches[0].clientX;
             piece.dataset.touchY = e.touches[0].clientY;
@@ -348,7 +354,7 @@
           
           puzzleBoard.appendChild(piece);
         });
-        
+
         // Add drag handlers to slots
         const slots = document.querySelectorAll('.puzzle-slot');
         slots.forEach(slot => {
@@ -386,6 +392,15 @@
             }
           });
         });
+
+        // allow closing puzzle modal by tapping outside or cancel (restore scrolling)
+        puzzleModal.addEventListener('click', (ev) => {
+          if (ev.target === puzzleModal) {
+            puzzleModal.style.display = 'none';
+            document.body.style.overflow = prevOverflow || '';
+            puzzleModal.ontouchmove = null;
+          }
+        });
       }, 3000);
     }
     
@@ -395,7 +410,11 @@
       
       if (allFilled) {
         setTimeout(() => {
-          document.getElementById('puzzleModal').style.display = 'none';
+          const puzzleModal = document.getElementById('puzzleModal');
+          puzzleModal.style.display = 'none';
+          // restore body scroll and remove touchmove blocker
+          document.body.style.overflow = '';
+          puzzleModal.ontouchmove = null;
           const paperCard = document.getElementById('paperCard');
           paperCard.style.display = 'flex';
           
