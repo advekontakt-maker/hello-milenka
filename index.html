@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dla mojej królowej</title>
+  <title>MilenkaSkibidiSigma</title>
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -23,40 +23,32 @@
     }
     .first {
       text-align:center;
-      animation:fadeIn 3s ease-in-out;
     }
     .first h1 {
       font-family:'Dancing Script', cursive;
       font-size:68px;
-      margin-bottom:20px;
+      margin-bottom:30px;
       color:#ff6bc1;
       text-shadow:0 4px 20px rgba(255,107,193,0.3);
     }
     .first p {
-      font-size:24px;
-      margin:30px 40px;
-      line-height:1.8;
+      font-size:26px;
+      margin-bottom:40px;
       color:#ff8ac2;
     }
     .btn {
-      margin-top:50px;
-      padding:18px 50px;
-      font-size:22px;
-      background:#ff6bc1;
-      color:white;
+      padding:20px 50px;
+      font-size:80px;
+      background:none;
       border:none;
-      border-radius:50px;
       cursor:pointer;
-      box-shadow:0 15px 40px rgba(255,107,193,0.4);
       transition:all .4s;
-      font-weight:600;
     }
     .btn:hover {
-      transform:translateY(-5px);
-      box-shadow:0 25px 50px rgba(255,107,193,0.5);
+      transform:scale(1.2);
     }
 
-    .letter {
+    #letter {
       display:none;
       flex-direction:column;
       align-items:center;
@@ -64,25 +56,25 @@
       height:100vh;
       padding:40px;
       text-align:center;
-      animation:fadeIn 2s ease-in-out;
+      opacity:0;
+      transition:opacity 1.5s ease-in-out;
     }
     .letter p {
-      font-size:28px;
+      font-size:30px;
       line-height:2;
-      max-width:800px;
-      margin:30px auto;
+      margin:25px auto;
       color:#ff6bc1;
     }
     .letter .big {
       font-family:'Dancing Script', cursive;
-      font-size:80px;
+      font-size:90px;
       color:#ff8ac2;
-      margin:40px 0;
+      margin:50px 0;
       text-shadow:0 5px 30px rgba(255,138,194,0.4);
     }
-    .letter .end {
-      font-size:32px;
-      margin-top:60px;
+    .end {
+      font-size:36px;
+      margin-top:70px;
       color:#ff6bc1;
       font-style:italic;
     }
@@ -91,12 +83,7 @@
       position:fixed;
       top:0; left:0;
       z-index:-1;
-      opacity:0.6;
-    }
-
-    @keyframes fadeIn {
-      from { opacity:0; transform:translateY(30px); }
-      to { opacity:1; transform:translateY(0); }
+      opacity:0.7;
     }
   </style>
 </head>
@@ -128,46 +115,42 @@
   </div>
 
   <script>
-    // Piękne animowane serduszka w tle
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     const hearts = [];
-    for(let i=0; i<25; i++){
-      setTimeout(() => {
-        hearts.push({
-          x: Math.random()*canvas.width,
-          y: canvas.height + 100,
-          size: Math.random()*40 + 30,
-          speed: Math.random()*2 + 1,
-          opacity: Math.random()*0.5 + 0.5
-        });
-      }, i*200);
+    for(let i = 0; i < 30; i++){
+      hearts.push({
+        x: Math.random() * canvas.width,
+        y: canvas.height + 100,
+        size: Math.random() * 50 + 30,
+        speed: Math.random() * 2 + 1.5,
+        opacity: Math.random() * 0.6 + 0.4
+      });
     }
 
-    function drawHeart(x,y,size) {
+    function drawHeart(x, y, size) {
       ctx.font = size + 'px serif';
-      ctx.fillText('❤️', x, y);
+      ctx.fillText('❤️', x - size/2, y);
     }
 
     function animate() {
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      hearts.forEach((h,i) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hearts.forEach(h => {
         h.y -= h.speed;
         ctx.globalAlpha = h.opacity;
         drawHeart(h.x, h.y, h.size);
         if(h.y < -100) {
           h.y = canvas.height + 100;
-          h.x = Math.random()*canvas.width;
+          h.x = Math.random() * canvas.width;
         }
       });
       requestAnimationFrame(animate);
     }
     animate();
 
-    // Otwieranie listu
     document.getElementById('open').addEventListener('click', () => {
       document.getElementById('first').style.opacity = '0';
       setTimeout(() => {
@@ -178,8 +161,6 @@
         }, 100);
       }, 800);
     });
-
-    // Zmień "[jej imię]" na prawdziwe imię na samej górze strony
   </script>
 
 </body>
