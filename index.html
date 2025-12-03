@@ -3,280 +3,184 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Skibidi</title>
-  <link rel="stylesheet" href="styles.css">
-  
+  <title>Dla mojej królowej</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    /* Na wypadek gdyby styles.css nie działał – najważniejsze style wkleiłam tu */
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: 'Comic Sans MS', cursive, sans-serif; background: linear-gradient(135deg, #ffeef8, #ffd4f0); overflow-x:hidden; min-height:100vh; display:flex; justify-content:center; align-items:center; }
-    .container { position:relative; width:100%; max-width:500px; padding:20px; }
-    .btn { padding:16px 32px; font-size:22px; background:#ff2d95; color:white; border:none; border-radius:50px; cursor:pointer; box-shadow:0 8px 20px rgba(255,45,149,0.4); transition:all .3s; }
-    .btn:hover { transform:scale(1.1); }
-    .btn-appear { animation:appear 0.8s ease-out; }
-    @keyframes appear { from {opacity:0; transform:scale(0.5) rotate(20deg);} to {opacity:1; transform:scale(1) rotate(0);} }
-    
-    .paper-card { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:90%; max-width:420px; background:#fff8fb; border-radius:20px; box-shadow:0 20px 60px rgba(255,45,149,0.3); padding:30px; text-align:center; z-index:9999; display:flex; flex-direction:column; align-items:center; }
-    .close-btn { position:absolute; top:10px; right:15px; font-size:40px; background:none; border:none; cursor:pointer; color:#ff69b4; }
-    #letterText { font-size:28px; margin-top:20px; color:#ff2d95; }
+    body {
+      height:100vh;
+      background:linear-gradient(135deg, #ffeef8, #ffd4e8, #ffbbe2);
+      overflow:hidden;
+      font-family:'Playfair Display', serif;
+      color:#d6336c;
+    }
+    .container {
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+    }
+    .first {
+      text-align:center;
+      animation:fadeIn 3s ease-in-out;
+    }
+    .first h1 {
+      font-family:'Dancing Script', cursive;
+      font-size:68px;
+      margin-bottom:20px;
+      color:#ff6bc1;
+      text-shadow:0 4px 20px rgba(255,107,193,0.3);
+    }
+    .first p {
+      font-size:24px;
+      margin:30px 40px;
+      line-height:1.8;
+      color:#ff8ac2;
+    }
+    .btn {
+      margin-top:50px;
+      padding:18px 50px;
+      font-size:22px;
+      background:#ff6bc1;
+      color:white;
+      border:none;
+      border-radius:50px;
+      cursor:pointer;
+      box-shadow:0 15px 40px rgba(255,107,193,0.4);
+      transition:all .4s;
+      font-weight:600;
+    }
+    .btn:hover {
+      transform:translateY(-5px);
+      box-shadow:0 25px 50px rgba(255,107,193,0.5);
+    }
 
-    .burn-svg { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; opacity:0.6; }
+    .letter {
+      display:none;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      height:100vh;
+      padding:40px;
+      text-align:center;
+      animation:fadeIn 2s ease-in-out;
+    }
+    .letter p {
+      font-size:28px;
+      line-height:2;
+      max-width:800px;
+      margin:30px auto;
+      color:#ff6bc1;
+    }
+    .letter .big {
+      font-family:'Dancing Script', cursive;
+      font-size:80px;
+      color:#ff8ac2;
+      margin:40px 0;
+      text-shadow:0 5px 30px rgba(255,138,194,0.4);
+    }
+    .letter .end {
+      font-size:32px;
+      margin-top:60px;
+      color:#ff6bc1;
+      font-style:italic;
+    }
 
-    .heart, .spark, .burst-particle { position:absolute; pointer-events:none; user-select:none; }
-    .heart { animation: floatUp 2s ease-out forwards; }
-    .spark { width:8px; height:8px; background:#fff; border-radius:50%; animation:sparkle 1s ease-out forwards; }
-    .burst-particle { font-size:24px; animation:burstFloat 0.8s ease-out forwards; }
+    canvas {
+      position:fixed;
+      top:0; left:0;
+      z-index:-1;
+      opacity:0.6;
+    }
 
-    .puzzle-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:9998; }
-    .puzzle-container { background:white; border-radius:20px; padding:30px; text-align:center; max-width:400px; width:90%; }
-    .puzzle-message { font-size:20px; margin-bottom:20px; color:#ff2d95; }
-    .puzzle-board, .puzzle-slots { display:flex; justify-content:center; gap:15px; margin:20px 0; }
-    .puzzle-piece { width:100px; height:120px; background:#ffeef8; border:3px dashed #ff99c8; border-radius:12px; cursor:grab; }
-    .puzzle-slot { width:100px; height:120px; background:#f0f0f0; border-radius:12px; }
-    .puzzle-slot.filled { border:none; }
-    .puzzle-slot-content { width:100%; height:100%; background-size:300% 100%; border-radius:12px; }
-
-    .snake-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center; z-index:10000; }
-    .snake-ui { background:#fff; border-radius:20px; padding:20px; text-align:center; }
-    .snake-score { font-size:24px; margin-bottom:10px; color:#ff2d95; }
-    #snakeCanvas { background:#000; border-radius:12px; }
-
-    .bored-btn { margin-top:40px; background:#ff69b4; }
-
-    @keyframes floatUp { to { transform:translateY(-300px) rotate(360deg); opacity:0; } }
-    @keyframes sparkle { to { transform:scale(0); opacity:0; } }
-    @keyframes burstFloat { to { transform:translate(var(--tx), var(--ty)) scale(0); opacity:0; } }
+    @keyframes fadeIn {
+      from { opacity:0; transform:translateY(30px); }
+      to { opacity:1; transform:translateY(0); }
+    }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <button class="btn" id="loveBtn">Kliknij żeby odkryć niespodziankę</button>
+  <canvas id="canvas"></canvas>
 
-    <div class="paper-card" id="paperCard">
-      <svg class="burn-svg" viewBox="0 0 800 1000" preserveAspectRatio="none">
-        <defs>
-          <filter id="burnBlur"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter>
-          <radialGradient id="burnGrad1" cx="0%" cy="0%"><stop offset="0%" stop-color="#000"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient>
-          <radialGradient id="burnGrad2" cx="100%" cy="0%"><stop offset="0%" stop-color="#000"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient>
-          <radialGradient id="burnGrad3" cx="0%" cy="100%"><stop offset="0%" stop-color="#000"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient>
-          <radialGradient id="burnGrad4" cx="100%" cy="100%"><stop offset="0%" stop-color="#000"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient>
-        </defs>
-        <circle cx="750" cy="50" r="150" fill="url(#burnGrad1)" filter="url(#burnBlur)"/>
-        <circle cx="50" cy="50" r="150" fill="url(#burnGrad2)" filter="url(#burnBlur)"/>
-        <circle cx="750" cy="950" r="150" fill="url(#burnGrad3)" filter="url(#burnBlur)"/>
-        <circle cx="50" cy="950" r="150" fill="url(#burnGrad4)" filter="url(#burnBlur)"/>
-      </svg>
-      <button class="close-btn" id="closePaperBtn">×</button>
-      <div class="paper-content">
-        <p id="letterText">KOCHAM CIĘ MÓJ SKARBIE ❤️</p>
-      </div>
+  <div class="container" id="first">
+    <div class="first">
+      <h1>[jej imię]</h1>
+      <p>To jest tylko dla Ciebie.<br>Gotowa na najpiękniejszą rzecz, jaką kiedykolwiek dla Ciebie zrobiłem?</p>
+      <button class="btn" id="open">Tak, jestem gotowa ❤️</button>
     </div>
+  </div>
 
-    <div class="puzzle-modal" id="puzzleModal">
-      <div class="puzzle-container">
-        <div class="puzzle-message">Ułóż kawałki serca, moja miłości — zasługujesz na niespodziankę ❤️</div>
-        <div class="puzzle-board" id="puzzleBoard"></div>
-        <div class="puzzle-slots" id="puzzleSlots"></div>
-      </div>
-    </div>
-
-    <button id="boredBtn" class="btn bored-btn">Kliknij mnie jak ci się nudzi</button>
-
-    <div id="snakeModal" class="snake-modal">
-      <div class="snake-ui">
-        <div class="snake-header">
-          <div class="snake-score">Punkty: <span id="snakeScore">0</span></div>
-          <button id="closeSnake" class="close-btn">×</button>
-        </div>
-        <canvas id="snakeCanvas" width="400" height="400"></canvas>
-        <div class="snake-controls">
-          <button id="snakeRestart" class="btn">Restart</button>
-        </div>
-      </div>
+  <div class="container" id="letter">
+    <div class="letter">
+      <p>Kochanie moje...</p>
+      <p>Nie znajduję słów, które byłyby wystarczająco piękne,<br>żeby opisać to, co do Ciebie czuję.</p>
+      <p>Od kiedy jesteś w moim życiu,<br>każdy dzień jest jak sen, z którego nigdy nie chcę się obudzić.</p>
+      
+      <div class="big">Kocham Cię<br>nad wszystko</div>
+      
+      <p>Jesteś moim największym szczęściem,<br>moim spokojem, moim domem.</p>
+      <p>I obiecuję Ci – przy Tobie będę już zawsze.</p>
+      
+      <div class="end">Na zawsze Twój</div>
     </div>
   </div>
 
   <script>
-    // Cały Twój oryginalny JS – tylko minimalnie poprawiłem jedną linijkę (rawSvg)
-    const container = document.querySelector('.container');
-    let loveBtn = document.getElementById('loveBtn');
-    const puzzleModal = document.getElementById('puzzleModal');
-    const puzzleBoard = document.getElementById('puzzleBoard');
-    const puzzleSlots = document.getElementById('puzzleSlots');
-    const paperCard = document.getElementById('paperCard');
-    const closePaperBtn = document.getElementById('closePaperBtn');
-    const boredBtn = document.getElementById('boredBtn');
+    // Piękne animowane serduszka w tle
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    const heartEmojis = ['❤','💗','💖','💞','💕','❣️'];
-
-    function createHeart(x,y){
-      const heart=document.createElement('span'); heart.className='heart'; heart.innerText = heartEmojis[Math.floor(Math.random()*heartEmojis.length)];
-      const rect=container.getBoundingClientRect(); heart.style.left=(x-rect.left-12)+'px'; heart.style.top=(y-rect.top-12)+'px'; heart.style.pointerEvents='none';
-      const size=Math.floor(Math.random()*22)+16; heart.style.fontSize=size+'px'; heart.style.opacity=(Math.random()*0.4+0.6).toString();
-      const dx=Math.floor((Math.random()-0.5)*220); const rot=Math.floor((Math.random()-0.5)*720); const dur=(1.2+Math.random()*1.4).toFixed(2)+'s';
-      heart.style.setProperty('--dx', dx+'px'); heart.style.setProperty('--rot', rot+'deg'); heart.style.animationDuration=dur; container.appendChild(heart);
-      setTimeout(()=>heart.remove(), parseFloat(dur)*1000+300);
+    const hearts = [];
+    for(let i=0; i<25; i++){
+      setTimeout(() => {
+        hearts.push({
+          x: Math.random()*canvas.width,
+          y: canvas.height + 100,
+          size: Math.random()*40 + 30,
+          speed: Math.random()*2 + 1,
+          opacity: Math.random()*0.5 + 0.5
+        });
+      }, i*200);
     }
 
-    function createSpark(x,y){ const spark=document.createElement('span'); spark.className='spark'; const rect=container.getBoundingClientRect(); spark.style.left=(x-rect.left-4+(Math.random()-0.5)*24)+'px'; spark.style.top=(y-rect.top-4+(Math.random()-0.5)*12)+'px'; container.appendChild(spark); setTimeout(()=>spark.remove(),1000); }
-
-    function createBurstParticle(x,y,angle){ const p=document.createElement('span'); p.className='burst-particle'; p.innerHTML = ['✨','💫','⭐'][Math.floor(Math.random()*3)]; const rect=container.getBoundingClientRect(); p.style.position='absolute'; p.style.left=(x-rect.left)+'px'; p.style.top=(y-rect.top)+'px'; p.style.pointerEvents='none'; const dist=120; p.style.setProperty('--tx', Math.cos(angle)*dist+'px'); p.style.setProperty('--ty', Math.sin(angle)*dist+'px'); p.style.animation='burstFloat 0.8s ease-out forwards'; container.appendChild(p); setTimeout(()=>p.remove(),900); }
-
-    loveBtn.addEventListener('click', ()=>{ const r=loveBtn.getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2; for(let i=0;i<15;i++){ const rx=r.left+Math.random()*r.width; const ry=r.top+Math.random()*r.height; createHeart(rx,ry); if (Math.random()<0.4) createSpark(cx,cy);} setTimeout(()=>createNewButton(),600); });
-
-    function createNewButton(){ const newBtn=document.createElement('button'); newBtn.className='btn btn-appear'; newBtn.innerText='Spróbuj jeszcze raz'; loveBtn.parentNode.replaceChild(newBtn,loveBtn); loveBtn=newBtn; const r=newBtn.getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2; for(let i=0;i<8;i++) createBurstParticle(cx+Math.cos(i/8*Math.PI*2)*80, cy+Math.sin(i/8*Math.PI*2)*80, i/8*Math.PI*2); newBtn.addEventListener('click', ()=>{ for(let i=0;i<15;i++){ const rx=r.left+Math.random()*r.width; const ry=r.top+Math.random()*r.height; createHeart(rx,ry); if(Math.random()<0.4) createSpark(cx,cy);} setTimeout(()=>createThirdButton(),600); }); }
-
-    function createThirdButton(){ const third=document.createElement('button'); third.className='btn btn-appear'; third.innerText='Coś nie pykło'; const cur=container.querySelector('.btn'); cur.parentNode.replaceChild(third,cur); loveBtn=third; const r=third.getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2; for(let i=0;i<8;i++) createBurstParticle(cx+Math.cos(i/8*Math.PI*2)*80, cy+Math.sin(i/8*Math.PI*2)*80, i/8*Math.PI*2); third.addEventListener('click', ()=>{ for(let i=0;i<15;i++){ const rx=r.left+Math.random()*r.width; const ry=r.top+Math.random()*r.height; createHeart(rx,ry); if(Math.random()<0.4) createSpark(cx,cy);} setTimeout(()=>showPaperCard(),400); }); }
-
-    function showPaperCard(){
-      puzzleBoard.innerHTML=''; puzzleSlots.innerHTML=''; 
-      puzzleModal.style.display='flex'; 
-      const prevOverflow=document.body.style.overflow; 
-      document.body.style.overflow='hidden'; 
-      puzzleModal.ontouchmove = ev => ev.preventDefault(); 
-      
-      setTimeout(()=>{
-        const piecesCount=3; 
-        const indices=Array.from({length:piecesCount},(_,i)=>i); 
-        const shuffled=indices.sort(()=>Math.random()-0.5);
-        
-        const rawSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="120" viewBox="0 0 360 120">
-          <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#ff9fc8"/><stop offset="0.5" stop-color="#ff6aa6"/><stop offset="1" stop-color="#ff2d95"/></linearGradient></defs>
-          <rect width="360" height="120" rx="16" fill="#fff4f8"/>
-          <g transform="translate(40,10) scale(1)">
-            <path d="M150 20c-30-28-78-27-107 3c-25 25-28 64-7 90c21 26 67 54 117 88c50-34 96-62 117-88c21-26 18-65-7-90c-24-24-74-26-113-3z" fill="url(#g)" stroke="#c01a6b" stroke-width="3"/>
-          </g>
-        </svg>`;
-        
-        const heartSVG = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(rawSvg)));
-
-        indices.forEach((n,idx)=>{ 
-          const slot=document.createElement('div'); 
-          slot.className='puzzle-slot'; 
-          slot.dataset.correctIndex = n; 
-          slot.id = `slot-${idx}`; 
-          puzzleSlots.appendChild(slot); 
-        });
-        
-        shuffled.forEach(idx=>{ 
-          const piece=document.createElement('div'); 
-          piece.className='puzzle-piece'; 
-          piece.draggable=true; 
-          piece.dataset.index = idx; 
-          puzzleBoard.appendChild(piece); 
-          piece.style.backgroundImage = `url("${heartSVG}")`; 
-          piece.style.backgroundSize = `${piecesCount*100}% 100%`; 
-          const pos = piecesCount>1 ? (idx*(100/(piecesCount-1))) : 50; 
-          piece.style.backgroundPosition = `${pos}% 0%`;
-          
-          piece.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', idx); piece.classList.add('dragging'); }); 
-          piece.addEventListener('dragend', ()=>piece.classList.remove('dragging'));
-          
-          piece.addEventListener('touchstart', e=>{ e.preventDefault(); const t=e.touches[0]; piece.classList.add('dragging','moving'); const rect=piece.getBoundingClientRect(); piece.style.width = rect.width+'px'; piece.style.height = rect.height+'px'; document.body.appendChild(piece); piece.style.position='fixed'; piece.style.left=(t.clientX-rect.width/2)+'px'; piece.style.top=(t.clientY-rect.height/2)+'px'; piece.style.zIndex=3001; }, {passive:false});
-          piece.addEventListener('touchmove', e=>{ e.preventDefault(); const t=e.touches[0]; piece.style.left=(t.clientX-piece.offsetWidth/2)+'px'; piece.style.top=(t.clientY-piece.offsetHeight/2)+'px'; }, {passive:false});
-          piece.addEventListener('touchend', e=>{ 
-            const t=e.changedTouches[0]; 
-            const el = document.elementFromPoint(t.clientX, t.clientY); 
-            const slot = el?.closest('.puzzle-slot'); 
-            const pidx = parseInt(piece.dataset.index,10); 
-            if (slot){ 
-              const correct = parseInt(slot.dataset.correctIndex,10); 
-              if (pidx===correct){ 
-                const content=document.createElement('div'); 
-                content.className='puzzle-slot-content'; 
-                content.style.backgroundImage = `url("${heartSVG}")`; 
-                content.style.backgroundSize = `${piecesCount*100}% 100%`; 
-                const p = piecesCount>1 ? (pidx*(100/(piecesCount-1))) : 50; 
-                content.style.backgroundPosition = `${p}% 0%`; 
-                slot.innerHTML=''; 
-                slot.appendChild(content); 
-                slot.classList.add('filled'); 
-                piece.remove(); 
-                setTimeout(checkPuzzleComplete,300); 
-                return; 
-              } 
-            }
-            piece.style.position=''; piece.style.left=''; piece.style.top=''; piece.style.zIndex=''; piece.classList.remove('moving'); puzzleBoard.appendChild(piece); piece.classList.remove('dragging'); 
-          });
-        });
-
-        document.querySelectorAll('.puzzle-slot').forEach(slot=>{ 
-          slot.addEventListener('dragover', e=>{ e.preventDefault(); slot.style.background='#FFE4F0'; }); 
-          slot.addEventListener('dragleave', ()=> slot.style.background='#f0f0f0'); 
-          slot.addEventListener('drop', e=>{ 
-            e.preventDefault(); 
-            const idx=parseInt(e.dataTransfer.getData('text/plain'),10); 
-            const correct=parseInt(slot.dataset.correctIndex,10); 
-            if (idx===correct){ 
-              const content=document.createElement('div'); 
-              content.className='puzzle-slot-content'; 
-              content.style.backgroundImage = `url("${heartSVG}")`; 
-              content.style.backgroundSize = `${piecesCount*100}% 100%`; 
-              const p = piecesCount>1 ? (idx*(100/(piecesCount-1))) : 50; 
-              content.style.backgroundPosition = `${p}% 0%`; 
-              slot.innerHTML=''; 
-              slot.appendChild(content); 
-              slot.classList.add('filled'); 
-              const piece = document.querySelector(`[data-index="${idx}"]`); 
-              if (piece) piece.remove(); 
-              setTimeout(checkPuzzleComplete,300); 
-            } else slot.style.background='#f0f0f0'; 
-          }); 
-        });
-
-        puzzleModal.addEventListener('click', ev=>{ if (ev.target===puzzleModal){ puzzleModal.style.display='none'; document.body.style.overflow = prevOverflow || ''; puzzleModal.ontouchmove = null; } });
-      }, 3000);
+    function drawHeart(x,y,size) {
+      ctx.font = size + 'px serif';
+      ctx.fillText('❤️', x, y);
     }
 
-    function checkPuzzleComplete(){ 
-      const slots = document.querySelectorAll('.puzzle-slot'); 
-      const all = Array.from(slots).every(s=>s.classList.contains('filled')); 
-      if (all){ 
-        setTimeout(()=>{ 
-          puzzleModal.style.display='none'; 
-          document.body.style.overflow=''; 
-          puzzleModal.ontouchmove=null; 
-          paperCard.style.display='flex'; 
-          boredBtn.style.display = 'block'; 
-        }, 500); 
-      } 
+    function animate() {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      hearts.forEach((h,i) => {
+        h.y -= h.speed;
+        ctx.globalAlpha = h.opacity;
+        drawHeart(h.x, h.y, h.size);
+        if(h.y < -100) {
+          h.y = canvas.height + 100;
+          h.x = Math.random()*canvas.width;
+        }
+      });
+      requestAnimationFrame(animate);
     }
+    animate();
 
-    closePaperBtn.addEventListener('click', ()=> paperCard.style.display='none');
+    // Otwieranie listu
+    document.getElementById('open').addEventListener('click', () => {
+      document.getElementById('first').style.opacity = '0';
+      setTimeout(() => {
+        document.getElementById('first').style.display = 'none';
+        document.getElementById('letter').style.display = 'flex';
+        setTimeout(() => {
+          document.getElementById('letter').style.opacity = '1';
+        }, 100);
+      }, 800);
+    });
 
-    // Snake game – wszystko działa idealnie
-    (function(){ 
-      const snakeModal = document.getElementById('snakeModal'); 
-      const closeSnake = document.getElementById('closeSnake'); 
-      const snakeCanvas = document.getElementById('snakeCanvas'); 
-      const ctx = snakeCanvas.getContext('2d'); 
-      const scoreEl = document.getElementById('snakeScore'); 
-      const snakeRestart = document.getElementById('snakeRestart'); 
-      let grid=20; 
-      let cols=Math.floor(snakeCanvas.width/grid); 
-      let rows=Math.floor(snakeCanvas.height/grid); 
-      let snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}]; 
-      let dir={x:1,y:0}; 
-      let food=null; 
-      let gameInterval=null; 
-      let score=0; 
-      let speed=120;
-      
-      function placeFood(){ food={x:Math.floor(Math.random()*cols), y:Math.floor(Math.random()*rows)}; if (snake.some(s=>s.x===food.x && s.y===food.y)) placeFood(); }
-      function drawSnake(){ ctx.fillStyle='#000'; ctx.fillRect(0,0,snakeCanvas.width,snakeCanvas.height); if (food){ ctx.fillStyle='#ff2d95'; ctx.fillRect(food.x*grid, food.y*grid, grid, grid); } for(let i=0;i<snake.length;i++){ ctx.fillStyle = i===0? '#fff' : '#ff99c8'; ctx.fillRect(snake[i].x*grid, snake[i].y*grid, grid-1, grid-1); } }
-      function step(){ const head={x:snake[0].x+dir.x, y:snake[0].y+dir.y}; if (head.x<0) head.x=cols-1; if (head.x>=cols) head.x=0; if (head.y<0) head.y=rows-1; if (head.y>=rows) head.y=0; if (snake.some(s=>s.x===head.x && s.y===head.y)){ gameOver(); return; } snake.unshift(head); if (food && head.x===food.x && head.y===food.y){ score++; scoreEl.textContent=score; placeFood(); } else snake.pop(); drawSnake(); }
-      function startGame(){ snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}]; dir={x:1,y:0}; score=0; scoreEl.textContent=score; placeFood(); if (gameInterval) clearInterval(gameInterval); gameInterval=setInterval(step,speed); drawSnake(); }
-      function gameOver(){ clearInterval(gameInterval); gameInterval=null; alert('Koniec gry! Twój wynik: '+score); }
-      
-      window.addEventListener('keydown', e=>{ const k=e.key; if (k==='ArrowUp'&&dir.y===0) dir={x:0,y:-1}; if (k==='ArrowDown'&&dir.y===0) dir={x:0,y:1}; if (k==='ArrowLeft'&&dir.x===0) dir={x:-1,y:0}; if (k==='ArrowRight'&&dir.x===0) dir={x:1,y:0}; });
-      
-      (function(){ let sx=0, sy=0; snakeCanvas.addEventListener('touchstart', e=>{ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; }, {passive:true}); snakeCanvas.addEventListener('touchend', e=>{ const t=e.changedTouches[0]; const dx=t.clientX-sx, dy=t.clientY-sy; if (Math.abs(dx)>Math.abs(dy)){ if (dx>10 && dir.x===0) dir={x:1,y:0}; if (dx<-10 && dir.x===0) dir={x:-1,y:0}; } else { if (dy>10 && dir.y===0) dir={x:0,y:1}; if (dy<-10 && dir.y===0) dir={x:0,y:-1}; } }, {passive:true}); })();
-      
-      boredBtn.addEventListener('click', ()=>{ snakeModal.style.display='flex'; startGame(); });
-      closeSnake.addEventListener('click', ()=>{ snakeModal.style.display='none'; if (gameInterval) clearInterval(gameInterval); });
-      snakeRestart.addEventListener('click', ()=> startGame());
-    })();
+    // Zmień "[jej imię]" na prawdziwe imię na samej górze strony
   </script>
+
 </body>
 </html>
